@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>2048</title>
+    <link rel="icon" type="image/x-icon" href="https://play2048.co/favicon.ico">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background: #faf8ef;
+        }
+
+        .game-container {
+            margin-top: 120px;
+            width: 500px;
+            height: 500px;
+            padding: 16px;
+            background-color: #bbada0;
+            border-radius: 6px;
+            user-select: none;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .blank-tile {
+            background-color: #cdc1b4;
+            border-radius: 4px;
+            gap: 16px;
+        }
+
+        .cell {
+            position: absolute;
+            width: 105px;
+            height: 105px;
+            background-color: #eee4da;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            transition: left 150ms ease-out, top 150ms ease-out, opacity 0ms 150ms ease-in-out;
+            font-weight: bold;
+        }
+
+        .bumper {
+            animation: bump 150ms 150ms ease-in-out;
+        }
+
+        @keyframes bump {
+            0% {transform: scale(1.0)}
+            50% {transform: scale(1.1)}
+            100% {transform: scale(1.0)}
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="game-container">
+    </div>
+</div>
+<script>
+  const bgColours = {
+    2: '#eee4da',
+    4: '#ede0c8',
+    8: '#f2b179',
+    16: '#f59563',
+    32: '#f67c5f',
+    64: '#f65e3b',
+    128: '#edcf72',
+    256: '#edcc61',
+    512: '#edc850',
+    1024: '#edc53f',
+    2048: '#edc22e',
+  };
+
+  const fgColours = {
+    2: '#776e65',
+    4: '#776e65',
+    8: '#f9f6f2',
+    16: '#f9f6f2',
+    32: '#f9f6f2',
+    64: '#f9f6f2',
+    128: '#f9f6f2',
+    256: '#f9f6f2',
+    512: '#f9f6f2',
+    1024: '#f9f6f2',
+    2048: '#f9f6f2',
+  };
+
+  // Fill the game container with blank tiles
+  const gameContainer = document.querySelector('.game-container');
+  for (let i = 0; i < 16; i++) {
+    const blankTile = document.createElement('div');
+    blankTile.classList.add('blank-tile');
+    gameContainer.appendChild(blankTile);
+  }
+
+  const cells = new Array(16).fill(null);
+
+  cells[0] = 4;
+  cells[1] = 4;
+
+  const render = () => {
+    const old = gameContainer.querySelectorAll(".cell")
+    for (const cell of old) {
+      cell.remove();
+    }
+
+    for (let i = 0; i < cells.length; i++) {
+      if (!cells[i])
+        continue;
+
+      const x = i % 4;
+      const y = Math.floor(i / 4);
+      const el = document.createElement('div');
+      el.className = "cell";
+      el.textContent = cells[i];
+      el.style.left = `${x * 105 + (x + 1) * 16}px`;
+      el.style.top = `${y * 105 + (y + 1) * 16}px`;
+      el.style.color = fgColours[cells[i]];
+      el.style.backgroundColor = bgColours[cells[i]];
+      gameContainer.appendChild(el);
+    }
+  }
+
+  document.addEventListener('keydown', function (ev) {
+    const val = 8;
+    const el = document.createElement('div');
+    el.classList.add("cell")
+    el.textContent = `${val}`;
+    el.style.left = `16px`;
+    el.style.top = `16px`;
+    el.style.color = fgColours[val];
+    el.style.backgroundColor = bgColours[val];
+    el.style.opacity = '0';
+    gameContainer.appendChild(el);
+    el.offsetHeight;
+    el.style.opacity = '100%';
+    el.style.zIndex = '3';
+    el.classList.add("bumper")
+
+    const elems = gameContainer.querySelectorAll(".cell");
+    elems[0].style.left = `${16}px`;
+    elems[0].style.zIndex = '1';
+    elems[0].classList.remove("bumper")
+    elems[0].offsetHeight;
+    elems[0].classList.add("bumper")
+    elems[1].style.left = `${16}px`;
+    elems[1].style.zIndex = '0'
+    elems[0].style.opacity = '0';
+    elems[1].style.opacity = '0';
+  })
+
+  render();
+</script>
+</body>
+</html>
