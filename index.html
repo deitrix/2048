@@ -131,7 +131,7 @@
   const startingState = [
     null, null, null, null,
     null, null, null, null,
-    4, null, null, 2,
+    null, null, null, null,
     null, null, null, null
   ]
 
@@ -158,9 +158,9 @@
     el.style.scale = '1';
   }
 
-  const spawnRandomTiles = () => {
-    for (let i = 0; i < 1; i++) {
-      const val = (Math.floor(Math.random() * 2) + 1) * 2
+  const spawnRandomTiles = (n) => {
+    for (let i = 0; i < n; i++) {
+      const val = Math.random() > 0.9 ? 4 : 2
 
       // Collect up all the empty cells;
       const empty = cells
@@ -314,10 +314,10 @@
 
     const moved = handlePlay(indices)
     if (moved)
-      spawnRandomTiles()
+      spawnRandomTiles(1)
   })
 
-  spawnRandomTiles();
+  spawnRandomTiles(2);
 </script>
 </body>
 </html>
