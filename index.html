@@ -57,18 +57,28 @@
             justify-content: center;
             align-items: center;
             font-size: 48px;
-            transition: left 150ms ease-out, top 150ms ease-out, opacity 0ms 150ms ease-in-out;
+            transition: left 100ms ease-out, top 100ms ease-out, scale 200ms ease-out 100ms, opacity 0ms ease-out 100ms;
             font-weight: bold;
         }
 
-        .bumper {
-            animation: bump 150ms 150ms ease-in-out;
+        .garbage {
+            transition: left 100ms ease-out, top 100ms ease-out, scale 200ms ease-out 100ms, opacity 0ms ease-out 100ms;
+        }
+
+        .upgrade {
+            animation: bump 150ms ease-in-out 75ms;
         }
 
         @keyframes bump {
-            0% {transform: scale(1.0)}
-            50% {transform: scale(1.1)}
-            100% {transform: scale(1.0)}
+            0% {
+                transform: scale(1.0)
+            }
+            50% {
+                transform: scale(1.1)
+            }
+            100% {
+                transform: scale(1.0)
+            }
         }
 
     </style>
@@ -116,62 +126,198 @@
   }
 
   const cells = new Array(16).fill(null);
+  const cellElems = new Array(16).fill(null);
 
-  cells[0] = 4;
-  cells[1] = 4;
+  const startingState = [
+    null, null, null, null,
+    null, null, null, null,
+    4, null, null, 2,
+    null, null, null, null
+  ]
 
-  const render = () => {
-    const old = gameContainer.querySelectorAll(".cell")
-    for (const cell of old) {
-      cell.remove();
-    }
+  for (let i = 0; i < startingState.length; i++) {
+    const val = startingState[i]
+    if (!val)
+      continue
+    const x = i % 4;
+    const y = Math.floor(i / 4);
 
-    for (let i = 0; i < cells.length; i++) {
-      if (!cells[i])
-        continue;
+    const el = document.createElement('div')
+    el.classList.add("cell", "spawning")
+    el.textContent = `${val}`
+    el.style.left = `${x * 105 + (x + 1) * 16}px`;
+    el.style.top = `${y * 105 + (y + 1) * 16}px`;
+    el.style.scale = '0';
+    el.style.color = fgColours[val];
+    el.style.backgroundColor = bgColours[val];
 
-      const x = i % 4;
-      const y = Math.floor(i / 4);
-      const el = document.createElement('div');
-      el.className = "cell";
-      el.textContent = cells[i];
+    cells[i] = val
+    cellElems[i] = el
+    gameContainer.appendChild(el)
+    el.offsetHeight;
+    el.style.scale = '1';
+  }
+
+  const spawnRandomTiles = () => {
+    for (let i = 0; i < 1; i++) {
+      const val = (Math.floor(Math.random() * 2) + 1) * 2
+
+      // Collect up all the empty cells;
+      const empty = cells
+        .map((value, index) => ({index, value}))
+        .filter((e) => !e.value)
+
+      const index = empty[Math.floor(Math.random() * empty.length)].index;
+
+      const x = index % 4;
+      const y = Math.floor(index / 4);
+
+      const el = document.createElement('div')
+      el.classList.add("cell", "spawning")
+      el.textContent = `${val}`
       el.style.left = `${x * 105 + (x + 1) * 16}px`;
       el.style.top = `${y * 105 + (y + 1) * 16}px`;
-      el.style.color = fgColours[cells[i]];
-      el.style.backgroundColor = bgColours[cells[i]];
-      gameContainer.appendChild(el);
+      el.style.scale = '0';
+      el.style.color = fgColours[val];
+      el.style.backgroundColor = bgColours[val];
+
+      cells[index] = val
+      cellElems[index] = el
+      gameContainer.appendChild(el)
+      el.offsetHeight;
+      el.style.scale = '1';
     }
   }
 
-  document.addEventListener('keydown', function (ev) {
-    const val = 8;
-    const el = document.createElement('div');
-    el.classList.add("cell")
-    el.textContent = `${val}`;
-    el.style.left = `16px`;
-    el.style.top = `16px`;
-    el.style.color = fgColours[val];
-    el.style.backgroundColor = bgColours[val];
-    el.style.opacity = '0';
-    gameContainer.appendChild(el);
-    el.offsetHeight;
-    el.style.opacity = '100%';
-    el.style.zIndex = '3';
-    el.classList.add("bumper")
+  function handlePlay(indices) {
+    let garbage = document.querySelectorAll(".garbage")
+    for (let el of garbage) {
+      el.remove()
+    }
 
-    const elems = gameContainer.querySelectorAll(".cell");
-    elems[0].style.left = `${16}px`;
-    elems[0].style.zIndex = '1';
-    elems[0].classList.remove("bumper")
-    elems[0].offsetHeight;
-    elems[0].classList.add("bumper")
-    elems[1].style.left = `${16}px`;
-    elems[1].style.zIndex = '0'
-    elems[0].style.opacity = '0';
-    elems[1].style.opacity = '0';
+    let moved = false;
+    for (let i = 0; i < 16; i += 4) {
+      let edge = 0
+      let didMerge = false;
+      for (let j = i; j < i + 4; j++) {
+        const index = indices[j];
+        if (cells[index] === null)
+          continue
+
+
+        let edgeIndex = indices[i + edge];
+        let isMerge = false
+        if (j % 4 !== 0 && edge > 0 && cells[index] === cells[indices[i + edge - 1]] && !didMerge) {
+          edgeIndex = indices[i + edge - 1]
+          isMerge = true
+        }
+        if (edgeIndex === index) {
+          edge++
+          continue
+        }
+
+        moved = true
+
+        // get the element for the cell that's amount to move
+        const movingEl = cellElems[index];
+        movingEl.style.transition = 'unset';
+        movingEl.offsetHeight;
+        movingEl.style.transition = null;
+        movingEl.offsetHeight;
+
+        // Figure out the position it's going to move to
+        const x = edgeIndex % 4;
+        const y = Math.floor(edgeIndex / 4)
+        movingEl.style.top = `${y * 105 + (y + 1) * 16}px`
+        movingEl.style.left = `${x * 105 + (x + 1) * 16}px`
+
+        if (isMerge) {
+          movingEl.classList.add("garbage")
+          movingEl.style.opacity = '0'
+
+          const edgeEl = cellElems[edgeIndex]
+          edgeEl.classList.add("garbage")
+          edgeEl.style.opacity = '0'
+          edgeEl.style.zIndex = '1'
+
+          let val = cells[index]*2
+          const upgradeEl = document.createElement('div')
+          upgradeEl.classList.add("cell", "upgrade")
+          upgradeEl.textContent = `${val}`
+          upgradeEl.style.left = `${x * 105 + (x + 1) * 16}px`;
+          upgradeEl.style.top = `${y * 105 + (y + 1) * 16}px`;
+          upgradeEl.style.opacity = '0';
+          upgradeEl.style.color = fgColours[val];
+          upgradeEl.style.backgroundColor = bgColours[val];
+          gameContainer.appendChild(upgradeEl)
+          upgradeEl.offsetHeight;
+          upgradeEl.style.opacity = '1';
+
+          cells[edgeIndex] = val
+          cells[index] = null
+
+          cellElems[edgeIndex] = upgradeEl
+          cellElems[index] = null;
+          didMerge = true
+        } else {
+          cells[edgeIndex] = cells[index]
+          cells[index] = null
+
+          cellElems[edgeIndex] = cellElems[index]
+          cellElems[index] = null
+          didMerge = false
+        }
+
+        if (!isMerge) {
+          edge++
+        }
+      }
+    }
+    return moved
+  }
+
+  document.addEventListener('keydown', function (ev) {
+    let indices = [];
+    switch (ev.key) {
+      case "ArrowLeft":
+        for (let row = 0; row < 4; row++) {
+          for (let col = 0; col < 4; col++) {
+            indices.push(row * 4 + col)
+          }
+        }
+        break
+      case "ArrowRight":
+        for (let row = 0; row < 4; row++) {
+          for (let col = 3; col >= 0; col--) {
+            indices.push(row * 4 + col)
+          }
+        }
+        break
+      case "ArrowUp":
+        for (let col = 0; col < 4; col++) {
+          for (let row = 0; row < 4; row++) {
+            indices.push(row * 4 + col)
+          }
+        }
+        break
+      case "ArrowDown":
+        for (let col = 0; col < 4; col++) {
+          for (let row = 3; row >= 0; row--) {
+            indices.push(row * 4 + col)
+          }
+        }
+        break
+    }
+
+    if (indices.length !== 16)
+      return
+
+    const moved = handlePlay(indices)
+    if (moved)
+      spawnRandomTiles()
   })
 
-  render();
+  spawnRandomTiles();
 </script>
 </body>
 </html>
