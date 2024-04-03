@@ -20,15 +20,62 @@
 
         .container {
             display: flex;
-            justify-content: center;
+            align-items: center;
+            flex-direction: column;
             height: 100vh;
-            margin: 0;
-            padding: 0;
+            gap: 32px;
+            padding-top: 32px;
             background: #faf8ef;
         }
 
+        .header {
+            display: flex;
+            justify-content: space-between;
+            width: 500px;
+        }
+
+        .title {
+            font-size: 72px;
+            color: #776e65;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #776e65;
+        }
+
+        .header--left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .scores {
+            display: flex;
+            gap: 4px;
+        }
+
+        .scores > * {
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #bbada0;
+            padding: 8px 16px 2px;
+            color: #ebe4da;
+            text-align: center;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .scores > * > span {
+            font-weight: bold;
+            font-size: 24px;
+            color: #ffffff;
+        }
+
         .game-container {
-            margin-top: 120px;
             width: 500px;
             height: 500px;
             padding: 16px;
@@ -66,7 +113,7 @@
         }
 
         .upgrade {
-            animation: bump 150ms ease-in-out 75ms;
+            animation: bump 150ms ease-in-out 100ms;
         }
 
         @keyframes bump {
@@ -74,7 +121,7 @@
                 transform: scale(1.0)
             }
             50% {
-                transform: scale(1.1)
+                transform: scale(1.2)
             }
             100% {
                 transform: scale(1.0)
@@ -85,6 +132,18 @@
 </head>
 <body>
 <div class="container">
+    <div class="header">
+        <div class="header--left">
+            <h1 class="title">2048</h1>
+            <span class="subtitle">Join the tiles, get <strong>2048!</strong></span>
+        </div>
+        <div class="header--right">
+            <div class="scores">
+                <div class="score">Score <span id="scoreValue">0</span></div>
+                <div class="best">Best <span id="bestValue">0</span></div>
+            </div>
+        </div>
+    </div>
     <div class="game-container">
     </div>
 </div>
@@ -119,12 +178,14 @@
 
   // Fill the game container with blank tiles
   const gameContainer = document.querySelector('.game-container');
+  const scoreContainer = document.querySelector('#scoreValue');
   for (let i = 0; i < 16; i++) {
     const blankTile = document.createElement('div');
     blankTile.classList.add('blank-tile');
     gameContainer.appendChild(blankTile);
   }
 
+  let score = 0;
   const cells = new Array(16).fill(null);
   const cellElems = new Array(16).fill(null);
 
@@ -196,6 +257,7 @@
     }
 
     let moved = false;
+    let scoreChange = 0;
     for (let i = 0; i < 16; i += 4) {
       let edge = 0
       let didMerge = false;
@@ -241,6 +303,7 @@
           edgeEl.style.zIndex = '1'
 
           let val = cells[index]*2
+          scoreChange += val
           const upgradeEl = document.createElement('div')
           upgradeEl.classList.add("cell", "upgrade")
           upgradeEl.textContent = `${val}`
@@ -273,7 +336,7 @@
         }
       }
     }
-    return moved
+    return {moved, scoreChange}
   }
 
   document.addEventListener('keydown', function (ev) {
@@ -312,9 +375,14 @@
     if (indices.length !== 16)
       return
 
-    const moved = handlePlay(indices)
+    const {moved, scoreChange} = handlePlay(indices)
     if (moved)
       spawnRandomTiles(1)
+
+    if (scoreChange) {
+      score += scoreChange
+      scoreContainer.textContent = score
+    }
   })
 
   spawnRandomTiles(2);
