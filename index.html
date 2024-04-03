@@ -103,7 +103,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 48px;
             transition: left 100ms ease-out, top 100ms ease-out, scale 200ms ease-out 100ms, opacity 0ms ease-out 100ms;
             font-weight: bold;
         }
@@ -176,6 +175,20 @@
     2048: '#f9f6f2',
   };
 
+  const fontSizes = {
+    2: '48px',
+    4: '48px',
+    8: '48px',
+    16: '48px',
+    32: '48px',
+    64: '48px',
+    128: '40px',
+    256: '40px',
+    512: '40px',
+    1024: '36px',
+    2048: '36px',
+  };
+
   // Fill the game container with blank tiles
   const gameContainer = document.querySelector('.game-container');
   const scoreContainer = document.querySelector('#scoreValue');
@@ -211,6 +224,7 @@
     el.style.scale = '0';
     el.style.color = fgColours[val];
     el.style.backgroundColor = bgColours[val];
+    el.style.fontSize = fontSizes[val];
 
     cells[i] = val
     cellElems[i] = el
@@ -241,6 +255,7 @@
       el.style.scale = '0';
       el.style.color = fgColours[val];
       el.style.backgroundColor = bgColours[val];
+      el.style.fontSize = fontSizes[val];
 
       cells[index] = val
       cellElems[index] = el
@@ -302,7 +317,7 @@
           edgeEl.style.opacity = '0'
           edgeEl.style.zIndex = '1'
 
-          let val = cells[index]*2
+          let val = cells[index] * 2
           scoreChange += val
           const upgradeEl = document.createElement('div')
           upgradeEl.classList.add("cell", "upgrade")
@@ -312,6 +327,7 @@
           upgradeEl.style.opacity = '0';
           upgradeEl.style.color = fgColours[val];
           upgradeEl.style.backgroundColor = bgColours[val];
+          upgradeEl.style.fontSize = fontSizes[val];
           gameContainer.appendChild(upgradeEl)
           upgradeEl.offsetHeight;
           upgradeEl.style.opacity = '1';
