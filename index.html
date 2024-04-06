@@ -363,11 +363,10 @@
       const y = Math.floor(i / 4);
 
       const el = document.createElement('div')
-      el.classList.add("cell", "spawning")
+      el.classList.add("cell")
       el.textContent = `${val}`
       el.style.left = `${x * 105 + (x + 1) * 16}px`;
       el.style.top = `${y * 105 + (y + 1) * 16}px`;
-      el.style.scale = '0';
       el.style.color = fgColours[val];
       el.style.backgroundColor = bgColours[val];
       el.style.fontSize = fontSizes[val];
@@ -375,8 +374,6 @@
       cells[i] = val
       cellElems[i] = el
       gameContainer.appendChild(el)
-      el.offsetHeight;
-      el.style.scale = '1';
     }
   } else {
     spawnRandomTiles(2)
