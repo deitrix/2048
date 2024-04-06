@@ -53,7 +53,7 @@
             margin: 0;
         }
 
-        .game-over button {
+        .restart {
             padding: 8px 16px;
             background-color: #8f7a66;
             color: #f9f6f2;
@@ -64,19 +64,26 @@
             cursor: pointer;
         }
 
-        .game-over button:hover {
+        .restart:hover {
             background-color: #9c8774;
         }
 
-        .game-over button:focus {
+        .restart:focus {
             outline: none;
         }
 
         .header {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 24px;
             width: 500px;
+        }
+
+        .header--top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
         }
 
         .title {
@@ -173,8 +180,15 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1 class="title">2048</h1>
-        <span class="subtitle">Join the tiles, get <strong>2048!</strong></span>
+        <div class="header--top">
+            <div class="header--left">
+                <h1 class="title">2048</h1>
+                <span class="subtitle">Join the tiles, get <strong>2048!</strong></span>
+            </div>
+            <div class="header--right">
+                <button class="restart">New game</button>
+            </div>
+        </div>
         <div class="scores">
             <div>Time <span id="timeValue">00:00</span></div>
             <div>Moves <span id="movesValue">0</span></div>
@@ -186,7 +200,7 @@
     <div class="game-container">
         <div class="game-over">
             <h2>Game over!</h2>
-            <button id="restartButton">Try again</button>
+            <button class="restart">Try again</button>
         </div>
     </div>
 </div>
@@ -263,6 +277,7 @@
   function restartGame() {
     clearInterval(interval)
     displayTime(0, 0)
+    localStorage.removeItem('currentGame')
     for (let i = 0; i < 16; i++) {
       const el = cellElems[i]
       if (el) {
@@ -289,7 +304,9 @@
     spawnRandomTiles(2)
   }
 
-  document.querySelector('#restartButton').addEventListener('click', restartGame)
+  document.querySelectorAll('.restart').forEach((el) => {
+    el.addEventListener('click', restartGame)
+  })
 
   const spawnRandomTiles = (n) => {
     for (let i = 0; i < n; i++) {
