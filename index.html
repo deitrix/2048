@@ -16,6 +16,7 @@
             margin: 0;
             padding: 0;
             font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+            background: #faf8ef;
         }
 
         .container {
@@ -23,14 +24,58 @@
             align-items: center;
             flex-direction: column;
             height: 100vh;
-            gap: 32px;
+            gap: 8px;
+            width: 500px;
+            margin: 0 auto;
             padding-top: 32px;
-            background: #faf8ef;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgb(238 228 218 / 73%);
+            display: flex;
+            opacity: 0;
+            transition: opacity 500ms ease-out 750ms;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 2;
+        }
+
+        .game-over h2 {
+            font-size: 48px;
+            color: #776e65;
+            margin: 0;
+        }
+
+        .game-over button {
+            padding: 8px 16px;
+            background-color: #8f7a66;
+            color: #f9f6f2;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .game-over button:hover {
+            background-color: #9c8774;
+        }
+
+        .game-over button:focus {
+            outline: none;
         }
 
         .header {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 8px;
             width: 500px;
         }
 
@@ -45,15 +90,10 @@
             color: #776e65;
         }
 
-        .header--left {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
         .scores {
             display: flex;
-            gap: 4px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .scores > * {
@@ -67,6 +107,7 @@
             text-align: center;
             border-radius: 6px;
             text-transform: uppercase;
+            flex-grow: 1;
         }
 
         .scores > * > span {
@@ -132,18 +173,21 @@
 <body>
 <div class="container">
     <div class="header">
-        <div class="header--left">
-            <h1 class="title">2048</h1>
-            <span class="subtitle">Join the tiles, get <strong>2048!</strong></span>
-        </div>
-        <div class="header--right">
-            <div class="scores">
-                <div class="score">Score <span id="scoreValue">0</span></div>
-                <div class="best">Best <span id="bestValue">0</span></div>
-            </div>
+        <h1 class="title">2048</h1>
+        <span class="subtitle">Join the tiles, get <strong>2048!</strong></span>
+        <div class="scores">
+            <div>Time <span id="timeValue">00:00</span></div>
+            <div>Moves <span id="movesValue">0</span></div>
+            <div>Tiles <span id="tilesValue">0</span></div>
+            <div>Score <span id="scoreValue">0</span></div>
+            <div>Best <span id="bestValue">0</span></div>
         </div>
     </div>
     <div class="game-container">
+        <div class="game-over">
+            <h2>Game over!</h2>
+            <button id="restartButton">Try again</button>
+        </div>
     </div>
 </div>
 <script>
@@ -192,46 +236,60 @@
   // Fill the game container with blank tiles
   const gameContainer = document.querySelector('.game-container');
   const scoreContainer = document.querySelector('#scoreValue');
+  const bestContainer = document.querySelector('#bestValue');
+  const movesContainer = document.querySelector('#movesValue');
+  const tilesContainer = document.querySelector('#tilesValue');
+  const timeContainer = document.querySelector('#timeValue');
+  const gameOverContainer = document.querySelector('.game-over');
+
+  let best = localStorage.getItem('best') || 0;
+  bestContainer.textContent = best;
+
   for (let i = 0; i < 16; i++) {
     const blankTile = document.createElement('div');
     blankTile.classList.add('blank-tile');
     gameContainer.appendChild(blankTile);
   }
 
+  let startTime = null;
+  let endTime = null;
+  let interval = null;
   let score = 0;
+  let movesCount = 0;
+  let tilesCount = 0;
   const cells = new Array(16).fill(null);
   const cellElems = new Array(16).fill(null);
 
-  const startingState = [
-    null, null, null, null,
-    null, null, null, null,
-    null, null, null, null,
-    null, null, null, null
-  ]
+  function restartGame() {
+    clearInterval(interval)
+    displayTime(0, 0)
+    for (let i = 0; i < 16; i++) {
+      const el = cellElems[i]
+      if (el) {
+        el.remove()
+      }
+    }
+    cells.fill(null)
+    cellElems.fill(null)
+    score = 0
+    movesCount = 0
+    tilesCount = 0
+    scoreContainer.textContent = score
+    movesContainer.textContent = movesCount
+    tilesContainer.textContent = tilesCount
+    startTime = null
+    endTime = null
+    timeContainer.textContent = '00:00'
 
-  for (let i = 0; i < startingState.length; i++) {
-    const val = startingState[i]
-    if (!val)
-      continue
-    const x = i % 4;
-    const y = Math.floor(i / 4);
+    gameOverContainer.style.transition = 'unset'
+    gameOverContainer.style.opacity = '0'
+    gameOverContainer.offsetHeight;
+    gameOverContainer.style.transition = null
 
-    const el = document.createElement('div')
-    el.classList.add("cell", "spawning")
-    el.textContent = `${val}`
-    el.style.left = `${x * 105 + (x + 1) * 16}px`;
-    el.style.top = `${y * 105 + (y + 1) * 16}px`;
-    el.style.scale = '0';
-    el.style.color = fgColours[val];
-    el.style.backgroundColor = bgColours[val];
-    el.style.fontSize = fontSizes[val];
-
-    cells[i] = val
-    cellElems[i] = el
-    gameContainer.appendChild(el)
-    el.offsetHeight;
-    el.style.scale = '1';
+    spawnRandomTiles(2)
   }
+
+  document.querySelector('#restartButton').addEventListener('click', restartGame)
 
   const spawnRandomTiles = (n) => {
     for (let i = 0; i < n; i++) {
@@ -263,6 +321,65 @@
       el.offsetHeight;
       el.style.scale = '1';
     }
+  }
+
+  function displayTime(startTime, endTime) {
+    const elapsed = endTime - startTime
+    const minutes = Math.floor(elapsed / 60000)
+    const seconds = Math.floor((elapsed % 60000) / 1000)
+    timeContainer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  function storeCurrentGame() {
+    localStorage.setItem('currentGame', JSON.stringify({
+      cells,
+      score,
+      movesCount,
+      tilesCount,
+      startTime,
+      endTime: Date.now(),
+    }))
+  }
+
+  const currentGame = JSON.parse(localStorage.getItem('currentGame'))
+  if (currentGame) {
+    score = currentGame.score
+    movesCount = currentGame.movesCount
+    tilesCount = currentGame.tilesCount
+    scoreContainer.textContent = score
+    movesContainer.textContent = movesCount
+    tilesContainer.textContent = tilesCount
+    startTime = Date.now() - (currentGame.endTime - currentGame.startTime)
+    displayTime(startTime, Date.now())
+    interval = setInterval(() => {
+      displayTime(startTime, Date.now())
+      storeCurrentGame()
+    }, 250)
+    for (let i = 0; i < currentGame.cells.length; i++) {
+      const val = currentGame.cells[i]
+      if (!val)
+        continue
+      const x = i % 4;
+      const y = Math.floor(i / 4);
+
+      const el = document.createElement('div')
+      el.classList.add("cell", "spawning")
+      el.textContent = `${val}`
+      el.style.left = `${x * 105 + (x + 1) * 16}px`;
+      el.style.top = `${y * 105 + (y + 1) * 16}px`;
+      el.style.scale = '0';
+      el.style.color = fgColours[val];
+      el.style.backgroundColor = bgColours[val];
+      el.style.fontSize = fontSizes[val];
+
+      cells[i] = val
+      cellElems[i] = el
+      gameContainer.appendChild(el)
+      el.offsetHeight;
+      el.style.scale = '1';
+    }
+  } else {
+    spawnRandomTiles(2)
   }
 
   function handlePlay(indices) {
@@ -318,7 +435,6 @@
           edgeEl.style.zIndex = '1'
 
           let val = cells[index] * 2
-          scoreChange += val
           const upgradeEl = document.createElement('div')
           upgradeEl.classList.add("cell", "upgrade")
           upgradeEl.textContent = `${val}`
@@ -338,6 +454,10 @@
           cellElems[edgeIndex] = upgradeEl
           cellElems[index] = null;
           didMerge = true
+
+          scoreChange += val
+          tilesCount++
+          tilesContainer.textContent = tilesCount
         } else {
           cells[edgeIndex] = cells[index]
           cells[index] = null
@@ -353,6 +473,18 @@
       }
     }
     return {moved, scoreChange}
+  }
+
+  function isGameOver() {
+    for (let i = 0; i < 16; i++) {
+      if (cells[i] === null)
+        return false
+      if (i % 4 !== 3 && cells[i] === cells[i + 1])
+        return false
+      if (i < 12 && cells[i] === cells[i + 4])
+        return false
+    }
+    return true
   }
 
   document.addEventListener('keydown', function (ev) {
@@ -392,16 +524,38 @@
       return
 
     const {moved, scoreChange} = handlePlay(indices)
-    if (moved)
+    if (moved) {
       spawnRandomTiles(1)
+      movesCount++
+      movesContainer.textContent = movesCount
+      if (startTime === null) {
+        startTime = Date.now()
+        interval = setInterval(() => {
+          displayTime(startTime, Date.now())
+          storeCurrentGame()
+        }, 250)
+      }
 
+      if (isGameOver()) {
+        clearInterval(interval)
+        endTime = Date.now()
+        displayTime(startTime, endTime)
+        gameOverContainer.style.opacity = '1'
+        localStorage.removeItem('currentGame')
+      } else {
+        storeCurrentGame()
+      }
+    }
     if (scoreChange) {
       score += scoreChange
       scoreContainer.textContent = score
+      if (score > best) {
+        best = score
+        bestContainer.textContent = best
+        localStorage.setItem('best', best)
+      }
     }
   })
-
-  spawnRandomTiles(2);
 </script>
 </body>
 </html>
